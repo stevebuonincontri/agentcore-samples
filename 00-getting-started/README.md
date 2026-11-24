@@ -25,10 +25,14 @@ By the end, your agent will be running both locally (for development) and in the
 
 | Requirement | Minimum Version | Install |
 |---|---|---|
-| Node.js | 20.x | [nodejs.org](https://nodejs.org/) |
+| Node.js | 20.x | [nodejs.org](https://nodejs.org/) or `nvm install 20 && nvm use 20` (repo root has an `.nvmrc`) |
 | uv | 0.4+ | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| Python | 3.12+ (3.13 recommended) | `uv python install 3.13` (uv also creates the agent's own `.venv` for you) |
 | AWS CLI | 2.x | [AWS CLI install guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) |
 | Git | 2.x | [git-scm.com](https://git-scm.com/) |
+| AWS account | - | With Amazon Bedrock model access enabled for Claude (see below) |
+
+> **Python virtual environments:** if you have the repo-root `.venv` activated, run `deactivate` before using the `agentcore` command. That venv installs the legacy starter toolkit, which ships its own `agentcore` command that shadows the npm CLI.
 
 ### Install the AgentCore CLI
 
@@ -43,17 +47,24 @@ agentcore --version
 
 ### Configure AWS credentials
 
-You need an AWS account with Amazon Bedrock model access enabled (this sample uses Claude Sonnet via Bedrock).
+You need an AWS account with Amazon Bedrock model access enabled (this sample uses Claude Sonnet via Bedrock) in a region where AgentCore is available (for example `us-east-1` or `us-west-2`).
+
+Store credentials once under a named profile (`aws configure --profile <name>`), then point this folder at that profile with an environment file. The file holds only the profile name and region, never secrets:
 
 ```bash
-aws configure
-# Or set environment variables:
-# export AWS_ACCESS_KEY_ID=<your-key>
-# export AWS_SECRET_ACCESS_KEY=<your-secret>
-# export AWS_DEFAULT_REGION=us-east-1
+cp .env.example .env        # edit AWS_PROFILE / AWS_REGION if yours differ
+set -a; source .env; set +a # load into your current shell (repeat in each new terminal)
 ```
 
-Verify your credentials:
+`.env.example` defaults to profile `PROD` and region `us-west-2`. `.env` is gitignored.
+
+Verify everything in one step (read-only, creates nothing):
+
+```bash
+./verify-prereqs.sh
+```
+
+It checks Node, uv, the AWS CLI, git, the AgentCore CLI version, your credentials (`aws sts get-caller-identity`), Bedrock access, AgentCore API access and CloudFormation access. Or verify credentials by hand:
 
 ```bash
 aws sts get-caller-identity
@@ -61,7 +72,7 @@ aws sts get-caller-identity
 
 ### Required IAM permissions
 
-Your IAM user/role needs permissions for CloudFormation, S3, IAM role management, Lambda, CloudWatch Logs, and Bedrock AgentCore. 
+Your IAM user/role needs permissions for CloudFormation, S3, IAM role management, Lambda, CloudWatch Logs, and Bedrock AgentCore. The managed policies `BedrockAgentCoreFullAccess` and `AmazonBedrockFullAccess` cover the Bedrock and AgentCore parts. 
 
 ---
 
@@ -342,7 +353,7 @@ agentcore status
 You should see:
 
 ```
-AgentCore Status (target: default, us-east-1)
+AgentCore Status (target: default, us-west-2)
 
 Agents
   CustomerSupport: Deployed - Runtime: READY (arn:aws:bedrock-agentcore:...)
