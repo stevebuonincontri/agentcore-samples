@@ -191,7 +191,7 @@ uv pip install -r requirements.txt
 4. Register your virtual environment as a kernel for Jupyter notebook to use
 
 ```bash
-python -m ipykernel install --user --name=notebook-venv --display-name="Python (notebook-venv)"
+python -m ipykernel install --user --name=agentcore-samples --display-name="Python (agentcore-samples)"
 ```
 
 You can list your kernels using:
@@ -206,7 +206,7 @@ jupyter kernelspec list
 jupyter notebook path/to/your/notebook.ipynb
 ```
 
-**Important:** After opening the notebook in Jupyter, make sure to select the correct kernel by going to `Kernel` → `Change kernel` → select "Python (notebook-venv)" to ensure your virtual environment packages are available.
+**Important:** After opening the notebook in Jupyter, make sure to select the correct kernel by going to `Kernel` → `Change kernel` → select "Python (agentcore-samples)" to ensure your virtual environment packages are available.
 
 ## 🔗 Related Links
 
