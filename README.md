@@ -104,8 +104,18 @@ The [AgentCore CLI](https://github.com/aws/agentcore-cli) is the recommended way
 ### Step 1: Prerequisites
 
 - An [AWS account](https://signin.aws.amazon.com/signin?redirect_uri=https%3A%2F%2Fportal.aws.amazon.com%2Fbilling%2Fsignup%2Fresume&client_id=signup) with credentials configured (`aws configure`)
-- [Node.js 20.x](https://nodejs.org/) or later
-- [`uv`](https://docs.astral.sh/uv/) (for Python agents) or Node.js (for TypeScript agents)
+- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) installed
+- **Node.js 20** (via [nvm](https://github.com/nvm-sh/nvm)). A `.nvmrc` is provided at the repo root:
+  ```bash
+  nvm install 20 && nvm use 20
+  node --version   # v20.x
+  ```
+  Most samples need Node 20+. A few declare a newer minimum (22 or 24.8+), so check the sample's own README.
+- **Python 3.13** (via [`uv`](https://docs.astral.sh/uv/)). A `.python-version` is provided at the repo root. Python 3.14 is not yet supported by some dependencies.
+  ```bash
+  curl -LsSf https://astral.sh/uv/install.sh | sh   # or: brew install uv
+  uv python install 3.13
+  ```
 - Model Access: Anthropic Claude 4.0 enabled in [Amazon Bedrock console](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html)
 - AWS Permissions:
   - `BedrockAgentCoreFullAccess` managed policy
@@ -161,18 +171,20 @@ For the full CLI reference, see the [AgentCore CLI documentation](https://github
 
 Some samples in this repository are provided as Jupyter notebooks:
 
-1. Create and activate a virtual environment
+1. Create and activate a virtual environment (Python 3.13, see Prerequisites)
 
 ```bash
-python -m venv .venv
+uv venv --python 3.13 .venv
 source .venv/bin/activate
 ```
 
 2. Install dependencies
 
 ```bash
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 ```
+
+> **Heads up:** `requirements.txt` includes `bedrock-agentcore-starter-toolkit`, which installs its own legacy `agentcore` command. While the venv is active it shadows the [AgentCore CLI](https://github.com/aws/agentcore-cli) installed with `npm install -g @aws/agentcore`. Run `deactivate` before using the CLI commands in the Quick Start, or call the CLI by its full path (`which -a agentcore` lists both).
 
 3. Export/Activate required AWS Credentials for the notebook to run
 
