@@ -15,6 +15,24 @@ This tutorial walks through the complete harness workflow: creating an IAM execu
 creating a harness agent, invoking it with two different Claude models in the same session,
 and using ExecuteCommand to run shell commands directly on the agent's isolated microVM.
 
+## How to use this folder
+
+This folder shows the same harness two ways. They are independent: pick one, or do both in order.
+
+| | **Track A: Python script** (start here) | **Track B: AgentCore CLI** |
+|---|---|---|
+| **Run** | `python getting_started.py` | `agentcore create`, `deploy`, `invoke` |
+| **Uses** | boto3 only. No CLI needed. | AgentCore CLI **0.30.0** |
+| **What happens** | Creates the IAM role and harness, asks a question, switches models in the same session, runs a shell command on the agent's VM, then deletes everything it created. | Scaffolds a project folder, deploys it, and invokes it. |
+| **Cleanup** | Automatic (the script's `finally` block). | `agentcore remove harness`, then `agentcore deploy`. |
+
+There are no notebooks here. Every example in this repo is a plain `.py` script or a CLI project.
+Nothing in this folder requires `agentcore migrate`: Track A doesn't use the CLI, and Track B uses the
+v0 CLI that these samples are written for.
+
+**Before either track:** set your AWS profile and region (credentials in `~/.aws`), and make sure
+the Claude models below are enabled in Amazon Bedrock for that region.
+
 ## What is AgentCore harness?
 
 Harness helps developers ship agents faster by letting them:
@@ -88,11 +106,16 @@ permission on the execution role).
 ### Issue: Tool calls show but no text output
 **Solution**: The agent is working but producing output in tool calls, not text. This is normal for task-oriented prompts. The agent's final response will contain text.
 
-## AgentCore CLI
+## Track B: AgentCore CLI
 
-The harness is also accessible via the AgentCore CLI. Install it:
+The harness is also accessible via the AgentCore CLI. These samples need CLI **v0 (0.30.0)**.
+CLI v1 (1.x) works differently: its `create` has no Harness project type, `invoke` takes no plain-text
+prompt, and there is no `--stream` option. If `agentcore --version` shows 1.x and you see errors,
+see the install note below. Install it:
 
 ```bash
+# If npm fails with "Cannot read properties of null (reading 'resolve')" when
+# replacing a newer version, uninstall first: npm uninstall -g @aws/agentcore
 npm install -g @aws/agentcore@0.30.0
 node -e 'process.exit(+process.versions.node.split(".")[0] >= 20 ? 0 : 1)' \
   || { echo "ERROR: Node.js 20+ required by the AgentCore CLI (found $(node -v))"; exit 1; }
@@ -119,9 +142,12 @@ agentcore invoke --harness myresearchagent \
   "What are three fun things to do in Seattle on a rainy day?"
 ```
 
-Reuse the same `--session-id` to continue the conversation in the same environment. Run `agentcore dev` to test locally before deploying. Check project status with `agentcore status`.
+Reuse the same `--session-id` to continue the conversation in the same environment. Run `agentcore dev` to test locally before deploying. Check project status with `agentcore status`. The harness ID is stored in `agentcore/.cli/deployed-state.json` inside your project (keep that file out of git; it holds account details).
 
 ## Clean Up
+
+**Track A (script):** `getting_started.py` deletes the harness and IAM role for you when it finishes,
+even if a step fails. The calls it makes are:
 
 ```python
 # Delete the harness (stops billing for the resource)
@@ -132,7 +158,17 @@ from utils.iam import delete_harness_role
 delete_harness_role()
 ```
 
-## Running the Python Scripts
+You only run these yourself if you copy them into your own code.
+
+**Track B (CLI):** from inside your project folder:
+
+```bash
+agentcore remove harness --name myresearchagent   # add -y to skip the prompt
+agentcore deploy                                  # applies the deletion in AWS
+agentcore status                                  # confirm it is gone
+```
+
+## Track A: Running the Python Script
 
 ```bash
 pip install -r ../requirements.txt
@@ -141,3 +177,6 @@ pip install -r ../requirements.txt
 ```bash
 python getting_started.py
 ```
+
+The script prints six steps: IAM role, create harness, invoke with Claude Haiku, reuse the session with
+Claude Sonnet, run a shell command on the VM, then cleanup. Creating the harness can take a few minutes.
